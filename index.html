@@ -285,14 +285,34 @@ function triggerEffect_01(){
   }));
 
   const start = performance.now();
-  const dur = 1200;
+  const dur = 2400; // 更久：2.4s
 
-  // 流星参数
-  const sx = W + 200;
-  const sy = Math.random() * (H * 0.35) + 40;
-  const vx = -900;
-  const vy = 520;
+  // 方向：左下 -> 右上（从屏幕外左下角进来，飞向右上角外）
+  const sx = -300;
+  const sy = window.innerHeight + 240;
 
+  // 让它“穿越整屏”：终点飞到右上外侧
+  const ex = window.innerWidth + 420;
+  const ey = -260;
+
+  const vx = ex - sx;
+  const vy = ey - sy;
+
+  // 根据方向算旋转角度（让拖尾方向跟着走）
+  const theta = Math.atan2(vy, vx); // vy 是负数，会指向右上
+
+  // 暗化 + 蓝雾
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "rgba(0,0,0,1)";
+  ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha = 1;
+
+  const mist = ctx.createRadialGradient(W*0.55, H*0.6, 40, W*0.55, H*0.6, Math.max(W,H));
+  mist.addColorStop(0, "rgba(120,190,255,0.12)");
+  mist.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = mist;
+  ctx.fillRect(0,0,W,H);
+  
   function frame(t){
     const p = Math.min(1, (t - start) / dur);
     FX.clear();
@@ -313,42 +333,71 @@ function triggerEffect_01(){
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(-18 * Math.PI / 180);
+    ctx.rotate(theta);
 
-    // 1️⃣ 长尾拖影
-    const tailLen = 420;
-    const g = ctx.createLinearGradient(-tailLen, 0, 0, 0);
-    g.addColorStop(0, "rgba(255,255,255,0)");
-    g.addColorStop(0.5, "rgba(180,220,255,0.35)");
-    g.addColorStop(0.75, "rgba(255,255,255,0.85)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
+    // 尾巴更长更厚，像“光束穿屏”
+    const tailLen = Math.max(window.innerWidth, window.innerHeight) * 0.95;
+    const headGlow = 110; // 头部光晕
+
+    // 主尾巴渐变
+    let g = ctx.createLinearGradient(-tailLen, 0, 0, 0);
+    g.addColorStop(0.00, "rgba(255,255,255,0)");
+    g.addColorStop(0.35, "rgba(120,190,255,0.18)");
+    g.addColorStop(0.70, "rgba(255,255,255,0.95)");
+    g.addColorStop(1.00, "rgba(255,255,255,0)");
 
     ctx.strokeStyle = g;
-    ctx.lineWidth = 3.2;
-    ctx.shadowColor = "rgba(200,230,255,0.85)";
-    ctx.shadowBlur = 22;
+    ctx.lineWidth = 4.8;
+    ctx.shadowColor = "rgba(200,230,255,0.95)";
+    ctx.shadowBlur = 30;
 
     ctx.beginPath();
     ctx.moveTo(-tailLen, 0);
     ctx.lineTo(0, 0);
     ctx.stroke();
 
-    // 2️⃣ 流星头部亮点
+    // 第二层“更淡更宽”的外辉（让它更有体积）
+    g = ctx.createLinearGradient(-tailLen, 0, 0, 0);
+    g.addColorStop(0.00, "rgba(255,255,255,0)");
+    g.addColorStop(0.55, "rgba(160,220,255,0.10)");
+    g.addColorStop(0.90, "rgba(160,220,255,0.35)");
+    g.addColorStop(1.00, "rgba(255,255,255,0)");
+
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 14;
     ctx.beginPath();
-    ctx.arc(0, 0, 3.2, 0, Math.PI * 2);
+    ctx.moveTo(-tailLen * 0.9, 0);
+    ctx.lineTo(0, 0);
+    ctx.stroke();
+
+    // 头部亮点 + 光晕爆点
+    ctx.fillStyle = "rgba(255,255,255,0.98)";
+    ctx.beginPath();
+    ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3️⃣ 流星经过的光晕爆点
-    const haloR = 80 * (1 - p);
-    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, haloR);
-    halo.addColorStop(0, "rgba(200,230,255,0.55)");
-    halo.addColorStop(1, "rgba(200,230,255,0)");
+    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, headGlow);
+    halo.addColorStop(0, "rgba(200,235,255,0.62)");
+    halo.addColorStop(1, "rgba(200,235,255,0)");
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(0, 0, haloR, 0, Math.PI * 2);
+    ctx.arc(0, 0, headGlow, 0, Math.PI * 2);
     ctx.fill();
+
+    // 火花粒子（沿着流星方向向后喷）
+    const sparks = 18;
+    for(let i=0;i<sparks;i++){
+      const back = Math.random() * 220 + 20;          // 落在尾巴前段
+      const spread = (Math.random() - 0.5) * 26;      // 垂直散开
+      const r = Math.random()*1.8 + 0.6;
+      ctx.globalAlpha = 0.55 * (1 - p) * (Math.random()*0.7+0.3);
+      ctx.fillStyle = "rgba(220,250,255,1)";
+      ctx.beginPath();
+      ctx.arc(-back, spread, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
 
     ctx.restore();
     // ===== 豪华流星效果 end =====
@@ -378,7 +427,7 @@ function triggerEffect_02(){
   const total     = durSummon + durHold;
 
   // 粒子：从四周漂向中心偏右的位置（像咒语光芒聚集）
-  const target = { x: W*0.62, y: H*0.58 };
+  const target = { x: W*0.55, y: H*0.60 };
   const particles = Array.from({length: 520}, () => {
     const edge = Math.floor(Math.random()*4);
     let x,y;
@@ -400,69 +449,120 @@ function triggerEffect_02(){
 
   // ===== “银蓝色光之牝鹿”建模 start =====
   function drawDoeOutline(x, y, s, glow, breathe){
+    const t = performance.now();
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(s, s);
+
+    // 轻微“呼吸”缩放
+    const b = breathe ? (1 + 0.015*Math.sin(t/240)) : 1;
+    ctx.scale(b, b);
+
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    const GLOW_COLOR = `rgba(200,240,255,${0.9 * glow})`;
+    // ===== 轮廓路径（更像鹿：头、颈、背线、胸腹、腿）=====
+    function pathDoe(){
+      ctx.beginPath();
 
-    // ===== 外发光轮廓 =====
-    ctx.strokeStyle = GLOW_COLOR;
-    ctx.lineWidth = 18;
-    ctx.shadowColor = "rgba(180,230,255,0.85)";
-    ctx.shadowBlur = 32;
+      // 背线 + 臀部
+      ctx.moveTo(-170, 20);
+      ctx.quadraticCurveTo(-120, -10, -70, -12);
+      ctx.quadraticCurveTo(-10, -18,  55, -20);
+      ctx.quadraticCurveTo(110, -18, 150,  10);
 
-    ctx.beginPath();
+      // 胸腹线
+      ctx.quadraticCurveTo(175,  35, 160,  70);
+      ctx.quadraticCurveTo(145, 110, 120, 125);
+      ctx.quadraticCurveTo( 90, 145,  50, 140);
+      ctx.quadraticCurveTo(  0, 133, -60, 120);
+      ctx.quadraticCurveTo(-115, 108, -150,  80);
+      ctx.quadraticCurveTo(-175,  60, -170,  20);
 
-    // 身体
-    ctx.moveTo(-150, 30);
-    ctx.quadraticCurveTo(-60, 0, 40, -10);
-    ctx.quadraticCurveTo(100, -20, 140, 10);
+      // 颈与头（右侧朝前）
+      ctx.moveTo(135, 10);
+      ctx.quadraticCurveTo(160, -40, 125, -95);
+      ctx.quadraticCurveTo(105, -125,  70, -140);
+      ctx.quadraticCurveTo( 35, -155,  10, -140);
+      ctx.quadraticCurveTo( 25, -125,  45, -120);
+      ctx.quadraticCurveTo( 78, -112,  98, -95);
+      ctx.quadraticCurveTo(125, -70, 120, -35);
+      ctx.quadraticCurveTo(118,  -5, 135,  10);
 
-    // 胸口 → 前腿
-    ctx.quadraticCurveTo(160, 40, 140, 80);
-    ctx.quadraticCurveTo(130, 110, 115, 150);
-    ctx.quadraticCurveTo(105, 180, 90, 185);
+      // 耳朵（两只）
+      ctx.moveTo(72, -140);
+      ctx.quadraticCurveTo(78, -172, 98, -186);
+      ctx.moveTo(52, -138);
+      ctx.quadraticCurveTo(56, -168, 72, -178);
 
-    // 后腿（错位）
-    ctx.moveTo(-40, 70);
-    ctx.quadraticCurveTo(-45, 120, -40, 160);
-    ctx.quadraticCurveTo(-35, 185, -20, 188);
+      // 前腿（两条错位）
+      ctx.moveTo(125, 125);
+      ctx.quadraticCurveTo(130, 160, 120, 190);
+      ctx.quadraticCurveTo(112, 210,  98, 214);
 
-    // 颈
-    ctx.moveTo(120, 30);
-    ctx.quadraticCurveTo(140, -40, 110, -95);
+      ctx.moveTo(105, 128);
+      ctx.quadraticCurveTo(108, 162, 100, 188);
+      ctx.quadraticCurveTo( 92, 212,  78, 214);
 
-    // 头部
-    ctx.quadraticCurveTo(80, -135, 40, -140);
-    ctx.quadraticCurveTo(0, -145, -10, -120);
-    ctx.quadraticCurveTo(10, -115, 30, -115);
+      // 后腿（两条错位）
+      ctx.moveTo(-60, 120);
+      ctx.quadraticCurveTo(-70, 160, -62, 192);
+      ctx.quadraticCurveTo(-55, 212, -40, 214);
 
-    // 耳朵
-    ctx.moveTo(60, -140);
-    ctx.quadraticCurveTo(70, -175, 90, -185);
-    ctx.moveTo(40, -138);
-    ctx.quadraticCurveTo(45, -170, 60, -178);
+      ctx.moveTo(-88, 112);
+      ctx.quadraticCurveTo(-98, 150, -92, 182);
+      ctx.quadraticCurveTo(-86, 210, -70, 214);
+    }
 
+    // ===== 外辉（粗描边）=====
+    ctx.save();
+    ctx.globalAlpha = 0.95 * glow;
+    ctx.shadowColor = "rgba(170,230,255,0.95)";
+    ctx.shadowBlur  = 42;
+    ctx.strokeStyle = "rgba(190,240,255,0.35)";
+    ctx.lineWidth   = 22;
+    pathDoe();
     ctx.stroke();
+    ctx.restore();
 
-    // ===== 内细线（增强结构感）=====
+    // ===== 内亮线（细描边）=====
+    ctx.save();
+    ctx.globalAlpha = 0.95 * glow;
     ctx.shadowBlur = 0;
-    ctx.lineWidth = 2.2;
-    ctx.strokeStyle = "rgba(240,255,255,0.95)";
+    ctx.strokeStyle = "rgba(235,255,255,0.95)";
+    ctx.lineWidth   = 2.4;
+    pathDoe();
     ctx.stroke();
+    ctx.restore();
 
-    // ===== 呼吸光（胸腔）=====
-    if(breathe){
-      const r = 70 + Math.sin(performance.now()/260)*6;
-      const rg = ctx.createRadialGradient(120, 45, 0, 120, 45, r);
-      rg.addColorStop(0, "rgba(210,250,255,0.7)");
-      rg.addColorStop(1, "rgba(210,250,255,0)");
+    // ===== “能量雾丝带”（让它更像你图里的光雾）=====
+    ctx.save();
+    ctx.globalAlpha = 0.22 * glow;
+    for(let i=0;i<36;i++){
+      const px = -120 + Math.random()*320;
+      const py = -120 + Math.random()*360;
+      const r  = 18 + Math.random()*48;
+      const a  = 0.10 + Math.random()*0.18;
+
+      const rg = ctx.createRadialGradient(px, py, 0, px, py, r);
+      rg.addColorStop(0, `rgba(190,240,255,${a})`);
+      rg.addColorStop(1, "rgba(190,240,255,0)");
       ctx.fillStyle = rg;
       ctx.beginPath();
-      ctx.arc(120, 45, r, 0, Math.PI * 2);
+      ctx.arc(px, py, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 胸口“脉冲光”（呼吸点）
+    if(breathe){
+      const pulse = 0.5 + 0.5*Math.sin(t/220);
+      const rg = ctx.createRadialGradient(120, 35, 0, 120, 35, 85);
+      rg.addColorStop(0, `rgba(220,255,255,${0.25 + 0.25*pulse})`);
+      rg.addColorStop(1, "rgba(220,255,255,0)");
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(120, 35, 85, 0, Math.PI*2);
       ctx.fill();
     }
 
@@ -522,7 +622,7 @@ function triggerEffect_02(){
       const y = target.y + bob;
       const scale = 1.05 + 0.03*breath;
 
-      drawDoeOutline(x, y, 1.0, glow, true);
+      drawDoeOutline(x, y, 1.45, glow, true);
 
       // 一点“魔法爆闪”
       ctx.globalAlpha = 0.18 * glow * (1-p2);
