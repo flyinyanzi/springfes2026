@@ -138,14 +138,25 @@
       color: #fff;
       user-select:none;
     }
+
+    #fx{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4; /* 背景之上、弹窗之下（弹窗 z-index>=1000） */
+    }
+    body.night-sky{ background: radial-gradient(1100px 700px at 60% 25%, #0b1a3a, #05060d); }
+
   </style>
 </head>
 <body>
   <div class="hint">短句：随机顺序且不重复｜长信：最底层｜都可拖拽/关闭</div>
-  <canvas id="stars"></canvas>
+  <canvas id="fx"></canvas>
 
 <script>
-  // ========= 你主要改这里：短句 & 长信 =========
+  // ========= 编辑贺卡内容：短句 & 长信 =========
 
   // 柔和色（粉/蓝/绿）
   const pastel = [
@@ -156,50 +167,44 @@
 
   // 约 30 条短句（随机顺序，但每条只出现一次）
   const shortMsgs = [
-    "我在清晨闹钟醒来时想你，有时以为还和你打着电话",
-    "好好爱自己",
-    "我在高峰期的地铁里想你，不知道你每天上下班路上累不累",
-    "别总熬夜哦(ง•̀ω•́)ง",
-    "希望你天天开心",
-    "希望你工作顺利",
-    "希望你下班后不会遭到上司的短信轰炸",
-    "我在上班的间隙想你，也在工作忙的时候突然想起你",
-    "我在午休的时候不知道吃什么了，这里的便利店是我两年前熟悉的，但是我现在其实熟悉了中午和你分享一下我这里有什么吃的，再来选择自己要吃什么。那么我没有你了，我要吃什么呢",
-    "希望你每个中午都有好好吃饭",
-    "我在下午犯困的时候想你，其实之前也会犯困，但看到了你的消息，自己总会打起一些精神",
-    "我在下班的时候想你，今天的你有没有按时下班呢，下班后有没有遭遇上司的电话轰炸呢",
-    "我在下班后喝酒的时候想起你，你放心，我没有喝很多，因为你对我说“天冷了不要喝太多酒比较好”",
-    "我在洗澡的时候想你，如果你知道我在洗澡，又会想出什么新的让我羞耻又想做的动作呢",
-    "我好像从来没有刻意想起你，而是你总会出现在我的日常场景中，你的存在已经融入了我的生活",
-    "要好好吃午饭，即使食堂的饭菜不好吃也要注意补充营养呢",
-    "天气冷了就少吃冰淇淋和冰奶茶，小心胃不舒服呀。不过如果它们能让你开心那就吃吧",
+    "希望你每天早上起床都能精神充沛，元气满满迎接新的一天(*´∀`)♪",
+    "在冰岛人们相信有精灵的存在，在冰川苔原、溶洞岩石之间，我们总能与自然通灵",
+    "希望你每天上下班路上都顺顺利利的",
+    "别总熬夜哦",
+    "祝愿你天天开心(^○^)",
+    "希望你工作顺利(ง•̀ω•́)ง",
+    "希望你上班时不会遇到上司的信息轰炸，下班后也能独享悠闲时光",
+    "工作忙的时候也要注意休息哦，多活动手指和颈椎～",
+    "祝愿你在咖啡店里遇到的人都亲切和善",
+    "希望你每天中午都有好好吃饭",
+    "祝愿你能看到更多打动人心的演出，在音乐里治愈自己",
+    "祝愿你在大人的世界里依然有一颗纯真的童心",
+    "祝愿你在黑暗的魔法世界里能用“呼神护卫”为自己召唤出一头神秘而温暖的牝鹿",
+    "",
+    "",
+    "即使工作忙也好好吃饭哦，要注意补充营养呢",
+    "",
     "夜里睡觉记得盖好被子哦，别着凉",
     "姨妈期间也别喝凉的啦，多喝点温热滋补的",
     "喝水接力！工作忙的时候也记得多喝水哦",
     "注意天气变化，记得增添衣物，别感冒了",
-    "冬天干燥的话记得用护手霜身体乳哦",
+    "冬天干燥的话记得用护手霜和身体乳哦",
     "他变成了一颗星星，会永远在夜空中闪耀",
-    "希望你能去很多好玩的地方",
+    "希望你能去高山大川、隐秘森林、广阔天地……去很多好玩的地方",
     "希望你身体健康",
     "希望你心想事成",
     "希望你在自己感兴趣的领域里有美好的体验",
-    "希望你的未来如冬日暖阳般温暖、如锦绣繁花般绚烂",
-    "愿你遇到小小的好运",
-    "希望你每天下班都能开心度过夜晚的休闲时光"
+    "祝愿你的2026年如冬日暖阳般温暖、如锦绣繁花般绚烂",
+    "",
+    "希望你每天下班都能放松，开心度过夜晚的惬意时光"
   ];
 
-  const TRIGGER_TEXT = "他变成了一颗星星，会永远在夜空中闪耀";
+  const TRIGGER_TEXT_01 = "他变成了一颗星星，会永远在夜空中闪耀";
+  const TRIGGER_TEXT_02 = "祝愿你在黑暗的魔法世界里能用“呼神护卫”为自己召唤出一头神秘而温暖的牝鹿";
 
-  // 最后一封长信（替换成你的信即可，字数不限制）
-  const longLetter = `也许你说得对，我只不过是寂寞了需要陪伴的时候把你拉过来。我在日本孤独太久了，以至于你靠近我、给了我一些温暖，我就觉得自己喜欢你。
-那么究竟什么是喜欢呢，我好像变得不明白了。如果我们换个时间、换个场景认识，我还会喜欢你吗。会不会少了这些年龄差、异国、偶然相识、尚未见过面…等可以挑动人心的因素，我们就不会发生什么了。
-我们发生矛盾那两天，我在之前变得有些异常吧。我有情欲的时候，我想粘着你的时候。其实几个月来，我一直都在因为房子的贷款可能不能继续贷给我了的事而很压抑，一直用逃避来缓解它带给我的压力，而那两天，我知道裁判所的人要来我家实地考察，来准备进行拍卖手续了。我很害怕，也想大不了把它卖掉算了，反正我也不想在日本呆着了。但是这个事情一步步离我越来越近，还是让我很难受。
-对不起，我好像就是这样一个软弱的人。对不起，我挑动了你的情绪，又因为自己时不时不回复你而影响了你的心情。
-我想可能我现在还是不适合谈恋爱吧。我以为我是因为工作忙而没有心情、以为我是因为一些过去感情上的遭遇而不敢再触及亲密关系、以为我是生活中有种种这些客观现实而没有余力来好好和你经营感情…但也许事实是，我还没有把自己的感情好好沉淀，我还没有足够的勇气与爱的能力，这一切都是我自己主观的原因，而不是那些客观的东西。
-但是我很对不起你。你真的是一个很好很好的人，我相信即使不是因为我寂寞，我遇见你也会被你吸引，或者说，即使我可能现在没有足够的爱人的能力，我也因为你而一次又一次想要更努力一些。你和我畅想过的未来生活是真实而温暖的，是日常的一茶一饭，那简单的日常里有让我深深眷恋的感觉。你遇到问题的时候能用心和我说明白你的感受，让我觉得很安心。你总是能够陪伴我，给了我很多很多安慰。我真的很感谢你，也很喜欢你，我觉得遇见你真的是很好很幸运的事。
-谢谢你共情我的过去、我的情绪，谢谢你总是关心我的健康。对不起我在很多时候都没能给你足够的关怀与安全感，对不起我总是让你委屈。你真的很好很好，你真的值得拥有很多很多爱。
-你也注意身体，记得好好吃饭，少吃冰淇淋啦。
-祝你冬天快乐，以后的日子都幸福。
+
+  // 最后一封长信（字数不限制）
+  const longLetter = `
 `;
 
   // ========= 逻辑部分 =========
@@ -229,58 +234,302 @@
     return shortQueue.length ? shortQueue.shift() : null; // 用完就 null（不再重复）
   }
 
-// === 画星空（一次性）start ===
-(function initStars(){
-  const c = document.getElementById("stars");
-  if(!c) return;
+// ===== FX Canvas 初始化 =====
+const FX = (() => {
+  const c = document.getElementById("fx");
   const ctx = c.getContext("2d");
+  let w = 0, h = 0, dpr = 1;
+
   function resize(){
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
-    draw();
-  }
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    const n = Math.floor((c.width*c.height)/9000); // 密度可调
-    for(let i=0;i<n;i++){
-      const x = Math.random()*c.width;
-      const y = Math.random()*c.height;
-      const r = Math.random()*1.2 + 0.2;
-      ctx.globalAlpha = Math.random()*0.8 + 0.1;
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(x,y,r,0,Math.PI*2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    w = c.width = Math.floor(window.innerWidth * dpr);
+    h = c.height = Math.floor(window.innerHeight * dpr);
+    c.style.width = window.innerWidth + "px";
+    c.style.height = window.innerHeight + "px";
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr, dpr);
   }
   window.addEventListener("resize", resize);
   resize();
+
+  function clear(){
+    ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+  }
+
+  return { c, ctx, clear };
 })();
 
-// --- 触发夜空 + 流星（只触发一次，可按需改） ---
-let nightTriggered = false;
+let EFFECT_LOCK = false; // 防止同时触发多个
 
-function triggerNightAndStar(){
-  if(nightTriggered) return;
-  nightTriggered = true;
+// ===== Effect 01：夜空 + 流星 =====
+function triggerEffect_01(){
+  if(EFFECT_LOCK) return;
+  EFFECT_LOCK = true;
 
   document.body.classList.add("night-sky");
 
-  // 生成一颗流星
-  const star = document.createElement("div");
-  star.className = "shooting-star";
+  const ctx = FX.ctx;
+  const W = window.innerWidth, H = window.innerHeight;
 
-  // 从右上随机一点位置开始
-  const startX = window.innerWidth + 200;
-  const startY = Math.random() * (window.innerHeight * 0.35) + 40;
-  star.style.left = startX + "px";
-  star.style.top  = startY + "px";
+  // 画一层淡淡星星
+  const stars = Array.from({length: Math.floor((W*H)/12000)}, () => ({
+    x: Math.random()*W,
+    y: Math.random()*H,
+    r: Math.random()*1.2 + 0.2,
+    a: Math.random()*0.7 + 0.1
+  }));
 
-  document.body.appendChild(star);
-  star.addEventListener("animationend", () => star.remove());
+  const start = performance.now();
+  const dur = 1200;
+
+  // 流星参数
+  const sx = W + 200;
+  const sy = Math.random() * (H * 0.35) + 40;
+  const vx = -900;
+  const vy = 520;
+
+  function frame(t){
+    const p = Math.min(1, (t - start) / dur);
+    FX.clear();
+
+    // stars
+    for(const s of stars){
+      ctx.globalAlpha = s.a * 0.9;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // shooting star
+    const x = sx + vx * p;
+    const y = sy + vy * p;
+    const len = 240;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-18 * Math.PI/180);
+
+    const g = ctx.createLinearGradient(-len, 0, 0, 0);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.65, "rgba(255,255,255,0.95)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = "rgba(255,255,255,0.6)";
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(-len, 0);
+    ctx.lineTo(0, 0);
+    ctx.stroke();
+    ctx.restore();
+
+    // fade out end
+    if(p < 1){
+      requestAnimationFrame(frame);
+    }else{
+      setTimeout(() => { FX.clear(); EFFECT_LOCK = false; }, 200);
+    }
+  }
+  requestAnimationFrame(frame);
 }
-// === 画星空（一次性）end ===
+
+// ===== Effect 02：呼神护卫（雌鹿轮廓 + 粒子汇聚 + 发光）=====
+function triggerEffect_02(){
+  if(EFFECT_LOCK) return;
+  EFFECT_LOCK = true;
+
+  const ctx = FX.ctx;
+  const W = window.innerWidth, H = window.innerHeight;
+
+  const start = performance.now();
+  const durSummon = 1800;  // 汇聚阶段
+  const durHold   = 2400;  // 鹿显现与呼吸
+  const total     = durSummon + durHold;
+
+  // 粒子：从四周漂向中心偏右的位置（像咒语光芒聚集）
+  const target = { x: W*0.62, y: H*0.58 };
+  const particles = Array.from({length: 520}, () => {
+    const edge = Math.floor(Math.random()*4);
+    let x,y;
+    if(edge===0){ x=Math.random()*W; y=-30; }
+    if(edge===1){ x=W+30; y=Math.random()*H; }
+    if(edge===2){ x=Math.random()*W; y=H+30; }
+    if(edge===3){ x=-30; y=Math.random()*H; }
+    return {
+      x, y,
+      vx: 0, vy: 0,
+      r: Math.random()*1.6 + 0.4,
+      a: Math.random()*0.65 + 0.15
+    };
+  });
+
+  // 画一个“雌鹿轮廓”（用简单路径拟形：头、颈、背、腿）
+  // 这不是电影级建模，但视觉上会像“银蓝色光之鹿”
+  function drawDoeOutline(x, y, s, glow, breathe){
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    const alpha = 0.9;
+    ctx.globalAlpha = alpha;
+
+    // 外发光
+    ctx.strokeStyle = `rgba(200,240,255,${0.30*glow})`;
+    ctx.lineWidth = 18;
+    ctx.shadowColor = `rgba(170,230,255,${0.85*glow})`;
+    ctx.shadowBlur = 30;
+    ctx.beginPath();
+
+    // 一笔画的简化轮廓（抽象但像鹿）
+    ctx.moveTo(-120, 20);          // 尾部
+    ctx.quadraticCurveTo(-40, -10, 30, -20);   // 背
+    ctx.quadraticCurveTo(80, -25, 110, -10);   // 肩
+    ctx.quadraticCurveTo(135, 5, 140, 35);     // 胸前
+    ctx.quadraticCurveTo(145, 70, 120, 85);    // 前腿上
+    ctx.quadraticCurveTo(105, 95, 95, 130);    // 前腿下
+    ctx.quadraticCurveTo(85, 165, 70, 170);    // 蹄
+    ctx.moveTo(105, 85);
+    ctx.quadraticCurveTo(88, 105, 88, 135);
+    ctx.quadraticCurveTo(88, 168, 102, 170);
+
+    // 颈与头
+    ctx.moveTo(125, 40);
+    ctx.quadraticCurveTo(130, 10, 115, -35);   // 颈
+    ctx.quadraticCurveTo(95, -70, 60, -80);    // 头部轮廓
+    ctx.quadraticCurveTo(30, -88, 10, -70);    // 口鼻
+    ctx.quadraticCurveTo(28, -58, 45, -58);    // 下颌
+    ctx.quadraticCurveTo(80, -58, 92, -40);    // 回到颈
+    ctx.stroke();
+
+    // 内描边（更亮）
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(235,255,255,${0.95*glow})`;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-120, 20);
+    ctx.quadraticCurveTo(-40, -10, 30, -20);
+    ctx.quadraticCurveTo(80, -25, 110, -10);
+    ctx.quadraticCurveTo(135, 5, 140, 35);
+    ctx.quadraticCurveTo(145, 70, 120, 85);
+    ctx.quadraticCurveTo(105, 95, 95, 130);
+    ctx.quadraticCurveTo(85, 165, 70, 170);
+    ctx.moveTo(105, 85);
+    ctx.quadraticCurveTo(88, 105, 88, 135);
+    ctx.quadraticCurveTo(88, 168, 102, 170);
+
+    ctx.moveTo(125, 40);
+    ctx.quadraticCurveTo(130, 10, 115, -35);
+    ctx.quadraticCurveTo(95, -70, 60, -80);
+    ctx.quadraticCurveTo(30, -88, 10, -70);
+    ctx.quadraticCurveTo(28, -58, 45, -58);
+    ctx.quadraticCurveTo(80, -58, 92, -40);
+    ctx.stroke();
+
+    // 呼吸起伏（轻微）
+    if(breathe){
+      // 在胸口附近加一点淡淡光
+      ctx.globalAlpha = 0.35 * glow;
+      const rg = ctx.createRadialGradient(120, 35, 2, 120, 35, 60);
+      rg.addColorStop(0, "rgba(210,250,255,0.85)");
+      rg.addColorStop(1, "rgba(210,250,255,0)");
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(120, 35, 60, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function frame(t){
+    const elapsed = t - start;
+    FX.clear();
+
+    // 背景轻暗 + 银蓝雾
+    ctx.globalAlpha = 0.55;
+    const bg = ctx.createRadialGradient(W*0.6, H*0.55, 40, W*0.6, H*0.55, Math.max(W,H));
+    bg.addColorStop(0, "rgba(120,190,255,0.18)");
+    bg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha = 1;
+
+    // 阶段 1：粒子汇聚
+    const p1 = Math.min(1, elapsed / durSummon);
+    const ease = (x)=>1-Math.pow(1-x,3);
+
+    for(const pt of particles){
+      const ex = ease(p1);
+      // 朝目标靠拢 + 一点旋绕
+      const dx = target.x - pt.x;
+      const dy = target.y - pt.y;
+      pt.x += dx * (0.012 + 0.018*ex);
+      pt.y += dy * (0.012 + 0.018*ex);
+
+      // 旋绕
+      const swirl = 0.006 + 0.012*ex;
+      const ox = -dy * swirl;
+      const oy =  dx * swirl;
+      pt.x += ox;
+      pt.y += oy;
+
+      ctx.globalAlpha = pt.a * (0.25 + 0.85*ex);
+      ctx.fillStyle = "rgba(220,250,255,1)";
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // 阶段 2：雌鹿显现 + 轻微游动
+    if(elapsed > durSummon){
+      const p2 = Math.min(1, (elapsed - durSummon) / durHold);
+      const glow = 0.2 + 0.8 * ease(p2);
+
+      const breath = Math.sin((elapsed - durSummon) / 280) * 0.5 + 0.5; // 0~1
+      const bob = (Math.sin((elapsed - durSummon)/900) * 10);          // 轻微上下
+
+      const x = target.x;
+      const y = target.y + bob;
+      const scale = 1.05 + 0.03*breath;
+
+      drawDoeOutline(x, y, 1.0, glow, true);
+
+      // 一点“魔法爆闪”
+      ctx.globalAlpha = 0.18 * glow * (1-p2);
+      ctx.fillStyle = "rgba(230,255,255,1)";
+      ctx.beginPath();
+      ctx.arc(x, y, 140, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    if(elapsed < total){
+      requestAnimationFrame(frame);
+    }else{
+      // 慢慢清掉
+      const endStart = performance.now();
+      const fadeDur = 600;
+      (function fade(tt){
+        const pp = Math.min(1, (tt - endStart)/fadeDur);
+        ctx.globalAlpha = 1 - pp;
+        // 轻轻再画一帧雾（减少突兀）
+        ctx.fillStyle = "rgba(0,0,0,0.06)";
+        ctx.fillRect(0,0,W,H);
+        ctx.globalAlpha = 1;
+        if(pp < 1) requestAnimationFrame(fade);
+        else { FX.clear(); EFFECT_LOCK = false; }
+      })(endStart);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+// ===== Effect End =====
   
 function createPopup({text, kind="small"}){
   const el = document.createElement("div");
@@ -290,7 +539,7 @@ function createPopup({text, kind="small"}){
   el.style.background = pick(pastel);
 
   // 把结构塞进去（防止黑屏）
-  const title = kind==="letter" ? "给你的一封信" : pick(titles);
+  const title = kind==="letter" ? "贺卡" : pick(titles);
   el.innerHTML = `
     <div class="bar">
       <div class="title"><span class="dot"></span><span>${title}</span></div>
@@ -337,9 +586,10 @@ function createPopup({text, kind="small"}){
   // 关闭
   el.querySelector(".close").addEventListener("click", (e) => {
     e.stopPropagation();
-    // 如果关闭的是触发句 → 夜空流星
-    if(kind === "small" && text === TRIGGER_TEXT){
-      triggerNightAndStar();
+    // 如果关闭的是触发句 → 按序号变量关闭
+    if(kind === "small"){
+      if(text === TRIGGER_TEXT_01) triggerEffect_01();
+      if(text === TRIGGER_TEXT_02) triggerEffect_02();
     }
     el.remove();
   });
@@ -412,42 +662,7 @@ function createPopup({text, kind="small"}){
     createPopup({text: longLetter, kind:"letter"});
   }, intervalMs);
 
-  // === 夜空流星逻辑 start ===
-  /* 夜空模式（触发后） */
-  body.night-sky{
-    background: radial-gradient(1100px 700px at 60% 25%, #0b1a3a, #05060d);
-  }
 
-  /* 星星层（可选，轻量） */
-  #stars{
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .6s ease;
-    z-index: 2; /* 在背景上，但在弹窗下（弹窗 z-index>=1000） */
-  }
-  body.night-sky #stars{ opacity: .55; }
-
-  /* 流星 */
-  .shooting-star{
-    position: fixed;
-    width: 220px;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.95), rgba(255,255,255,0));
-    filter: drop-shadow(0 0 10px rgba(255,255,255,.55));
-    pointer-events: none;
-    z-index: 3;
-    transform: rotate(-18deg);
-    animation: shoot 1.1s ease-out forwards;
-  }
-
-  @keyframes shoot{
-    0%   { opacity: 0; transform: translate3d(0,0,0) rotate(-18deg); }
-    10%  { opacity: 1; }
-    100% { opacity: 0; transform: translate3d(-900px, 520px, 0) rotate(-18deg); }
-  }
-  // === 夜空流星逻辑 end ===
   
 </script>
 </body>
