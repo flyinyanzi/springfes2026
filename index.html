@@ -288,9 +288,9 @@ function triggerEffect_01(){
   const start = performance.now();
   const dur = 2400;
 
-  // 暗场：像月光那样“先压暗，再释放”
+  // 暗场：先压暗，再释放
   const darkIn = 500;     // 0.5s 暗下来
-  const darkHold = 900;   // 暗场维持
+  const darkHold = 1500;   // 暗场维持
   const darkOut = 700;    // 0.7s 恢复
   const darkTotal = darkIn + darkHold + darkOut;
 
