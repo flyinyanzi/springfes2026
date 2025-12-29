@@ -178,33 +178,34 @@
     "祝愿你天天开心(^○^)",
     "希望你工作顺利(ง•̀ω•́)ง",
     "希望你上班时不会遇到上司的信息轰炸，下班后也能独享悠闲时光",
-    "工作忙的时候也要注意休息哦，多活动手指和颈椎～",
+    "工作忙的时候也要注意休息呀，多多活动手指和颈椎～",
     "祝愿你在咖啡店里遇到的人都亲切和善",
     "希望你每天中午都有好好吃饭",
     "祝愿你能看到更多打动人心的演出，在音乐里治愈自己",
     "祝愿你在大人的世界里依然有一颗纯真的童心",
     "祝愿你在黑暗的魔法世界里能用“呼神护卫”为自己召唤出一头神秘而温暖的牝鹿",
-    "祝愿",
-    "祝愿",
+    "祝愿你依然能够在生活的间隙发现那些细微美好的事物",
+    "祝愿你每天都能看到蓝天白云以及壮丽的日落",
     "即使工作忙也好好吃饭哦，要注意补充营养呢",
-    "祝愿",
+    "祝愿你用最柔软的力量构筑起最坚固的人间",
     "夜里睡觉记得盖好被子哦，别着凉",
-    "姨妈期间也别喝凉的啦，多喝点温热滋补的",
-    "喝水接力！工作忙的时候也记得多喝水哦",
+    "姨妈期间多喝些温热滋补的东西哦",
+    "喝水接力！工作忙的时候也记得多喝水啦",
     "注意天气变化，记得增添衣物，别感冒了",
     "冬天干燥的话记得用护手霜和身体乳哦",
     "他变成了一颗星星，会永远在夜空中闪耀",
     "希望你能去高山大川、隐秘森林、广阔天地……去很多好玩的地方",
-    "希望你身体健康",
-    "希望你心想事成",
+    "祝愿你有温柔照亮归途的星光，在疲倦时有喘息安心之所",
+    "祝愿你在算法与KPI之外，可以用自己的汗水与泪光创造更多美好奇迹",
     "希望你在自己感兴趣的领域里有美好的体验",
     "祝愿你的2026年如冬日暖阳般温暖、如锦绣繁花般绚烂",
-    "祝愿",
+    "祝愿你不用时刻坚强，也可以在长夜与黎明里守住一窗月光",
     "希望你每天下班都能放松，开心度过夜晚的惬意时光"
   ];
 
   const TRIGGER_TEXT_01 = "他变成了一颗星星，会永远在夜空中闪耀";
   const TRIGGER_TEXT_02 = "祝愿你在黑暗的魔法世界里能用“呼神护卫”为自己召唤出一头神秘而温暖的牝鹿";
+  const TRIGGER_TEXT_03 = "祝愿你不用时刻坚强，也可以在长夜与黎明里守住一窗月光";
 
 
   // 最后一封长信（字数不限制）
@@ -654,6 +655,143 @@ function triggerEffect_02(){
 
   requestAnimationFrame(frame);
 }
+
+// ===== Effect 03：窗前月光照亮屏幕 =====
+function triggerEffect_03(){
+  if(EFFECT_LOCK) return;
+  EFFECT_LOCK = true;
+
+  // 触发时置顶
+  FX.c.classList.add("on-top");
+
+  const ctx = FX.ctx;
+  const W = window.innerWidth, H = window.innerHeight;
+
+  const start = performance.now();
+  const durIn  = 1200;   // 亮起
+  const durHold = 1700;  // 停留
+  const durOut = 900;    // 淡出
+  const total = durIn + durHold + durOut;
+
+  // 月亮位置：右上角
+  const moon = { x: W*0.84, y: H*0.18, r: Math.min(W,H)*0.085 };
+
+  // 画弯月：用“两个圆相减”的方式
+  function drawCrescent(x, y, r, phase){
+    // phase: 0~1，越大越“细”
+    ctx.save();
+
+    // 月光发光
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.9;
+
+    // 外发光
+    const glowR = r * 2.6;
+    const rg = ctx.createRadialGradient(x, y, r*0.2, x, y, glowR);
+    rg.addColorStop(0, "rgba(230,255,255,0.55)");
+    rg.addColorStop(0.55, "rgba(180,230,255,0.20)");
+    rg.addColorStop(1, "rgba(180,230,255,0)");
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(x, y, glowR, 0, Math.PI*2);
+    ctx.fill();
+
+    // 实体月牙（先画满月）
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "rgba(245,255,255,0.95)";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fill();
+
+    // 再用 destination-out 掏掉一块，形成弯月
+    ctx.globalCompositeOperation = "destination-out";
+    const offset = r * (0.55 + 0.35*phase); // 控制月牙弯度/粗细
+    ctx.beginPath();
+    ctx.arc(x + offset, y - r*0.08, r*0.98, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+  function easeInOut(t){
+    return t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+  }
+
+  function frame(t){
+    const elapsed = t - start;
+    const p = Math.min(1, elapsed / total);
+
+    FX.clear();
+
+    // 背景“月光点亮”：一个从右上角扩散的蓝白光晕 + 整体提亮
+    let a;
+    if(elapsed < durIn){
+      a = easeOutCubic(elapsed/durIn);
+    }else if(elapsed < durIn + durHold){
+      a = 1;
+    }else{
+      a = 1 - easeOutCubic((elapsed - durIn - durHold)/durOut);
+    }
+
+    // 1) 整体轻微提亮（像月光照亮空气）
+    ctx.globalAlpha = 0.18 * a;
+    ctx.fillStyle = "rgba(255,255,255,1)";
+    ctx.fillRect(0,0,W,H);
+
+    // 2) 右上角月光光束（主光晕）
+    ctx.globalAlpha = 1.05 * a;
+    const beamR = Math.max(W,H) * 0.95;
+    const beam = ctx.createRadialGradient(moon.x, moon.y, 20, moon.x, moon.y, beamR);
+    beam.addColorStop(0, "rgba(210,245,255,0.35)");
+    beam.addColorStop(0.25, "rgba(160,220,255,0.18)");
+    beam.addColorStop(0.65, "rgba(120,180,255,0.08)");
+    beam.addColorStop(1, "rgba(120,180,255,0)");
+    ctx.fillStyle = beam;
+    ctx.fillRect(0,0,W,H);
+
+    // 3) 很淡的“光束方向感”（斜向下）
+    ctx.globalAlpha = 0.16 * a;
+    ctx.save();
+    ctx.translate(moon.x, moon.y);
+    ctx.rotate(22 * Math.PI/180);
+    const grad = ctx.createLinearGradient(0, 0, 0, H*1.3);
+    grad.addColorStop(0, "rgba(220,250,255,0.35)");
+    grad.addColorStop(0.5, "rgba(220,250,255,0.12)");
+    grad.addColorStop(1, "rgba(220,250,255,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(-W*0.25, 0, W*0.6, H*1.25);
+    ctx.restore();
+
+    // 4) 弯月本体（phase 越大越细）
+    const phase = 0.65; // 你想更细：0.8；更胖：0.45
+    drawCrescent(moon.x, moon.y, moon.r, phase);
+
+    // 5) 轻微星点（可选）
+    ctx.globalAlpha = 0.28 * a;
+    for(let i=0;i<120;i++){
+      const x = Math.random()*W;
+      const y = Math.random()*H*0.6;
+      const r = Math.random()*1.2 + 0.2;
+      ctx.fillStyle = "rgba(255,255,255,1)";
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    if(elapsed < total){
+      requestAnimationFrame(frame);
+    }else{
+      FX.clear();
+      FX.c.classList.remove("on-top");
+      EFFECT_LOCK = false;
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
 // ===== Effect End =====
   
 function createPopup({text, kind="small"}){
@@ -715,6 +853,7 @@ function createPopup({text, kind="small"}){
     if(kind === "small"){
       if(text === TRIGGER_TEXT_01) triggerEffect_01();
       if(text === TRIGGER_TEXT_02) triggerEffect_02();
+      if(text === TRIGGER_TEXT_03) triggerEffect_03();
     }
     el.remove();
   });
