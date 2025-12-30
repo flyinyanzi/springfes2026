@@ -709,36 +709,64 @@ function triggerEffect_03(){
 
   // 画弯月：用“两个圆相减”的方式
   function drawCrescent(x, y, r, phase){
-    // phase: 0~1，越大越“细”
+    // phase: 0~1，越大越细
     ctx.save();
 
-    // 月光发光
+    // 1) 先构造月牙路径：大圆 - 偏移小圆
+    const offset = r * (0.55 + 0.35*phase);
+
+    // 用 Path2D 更干净
+    const outer = new Path2D();
+    outer.arc(x, y, r, 0, Math.PI*2);
+
+    const inner = new Path2D();
+    inner.arc(x + offset, y - r*0.08, r*0.98, 0, Math.PI*2);
+
+    // 2) 用 clip 做“月牙遮罩”（只允许在月牙区域绘制）
+    // 实现方式：先 clip 大圆，再用 destination-out 去掉内圆，再 clip 当前结果
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.clip();
+
+    // 把内圆区域“擦掉”，形成月牙
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(x + offset, y - r*0.08, r*0.98, 0, Math.PI*2);
+    ctx.fill();
+
+    // 现在画布只剩月牙可见区域：把 composite 复原，再 clip 一次保证后续都在月牙内
+    ctx.globalCompositeOperation = "source-over";
+    // 关键：用当前 alpha 结果再 clip（通过一次微透明填充固定遮罩）
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = "rgba(255,255,255,1)";
+    ctx.fillRect(0,0,window.innerWidth,window.innerHeight);
+
+    // 返回 source-over，并保持“月牙遮罩”效果
+    ctx.globalCompositeOperation = "source-over";
+    ctx.restore();
+
+    // 3) 在月牙遮罩内绘制：月光光晕 + 月面
     ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = 0.9;
 
-    // 外发光
-    const glowR = r * 2.6;
+    // 月光（只会出现在月牙里）
+    const glowR = r * 2.4;
     const rg = ctx.createRadialGradient(x, y, r*0.2, x, y, glowR);
     rg.addColorStop(0, "rgba(230,255,255,0.55)");
-    rg.addColorStop(0.55, "rgba(180,230,255,0.20)");
+    rg.addColorStop(0.6, "rgba(180,230,255,0.18)");
     rg.addColorStop(1, "rgba(180,230,255,0)");
     ctx.fillStyle = rg;
     ctx.beginPath();
     ctx.arc(x, y, glowR, 0, Math.PI*2);
     ctx.fill();
 
-    // 实体月牙（先画满月）
+    // 月面实体（仍然只在月牙里）
+    ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 0.95;
     ctx.fillStyle = "rgba(245,255,255,0.95)";
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI*2);
-    ctx.fill();
-
-    // 再用 destination-out 掏掉一块，形成弯月
-    ctx.globalCompositeOperation = "destination-out";
-    const offset = r * (0.55 + 0.35*phase); // 控制月牙弯度/粗细
-    ctx.beginPath();
-    ctx.arc(x + offset, y - r*0.08, r*0.98, 0, Math.PI*2);
     ctx.fill();
 
     ctx.restore();
@@ -1358,20 +1386,39 @@ function triggerEffect_FIREWORKS(){
       ctx.fillStyle = `rgba(${r},${g},${b},1)`;
 
       // 小光晕
-      const glow = pt.r * 6;
+      // const glow = pt.r * 6;
+      // const rg = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, glow);
+      // rg.addColorStop(0, `rgba(${r},${g},${b},0.65)`);
+      // rg.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      // ctx.fillStyle = rg;
+      // ctx.beginPath();
+      // ctx.arc(pt.x, pt.y, glow, 0, Math.PI*2);
+      // ctx.fill();
+      // 小光晕：更克制，避免一团雾
+      const glow = Math.max(8, pt.r * 3);
       const rg = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, glow);
-      rg.addColorStop(0, `rgba(${r},${g},${b},0.65)`);
+      rg.addColorStop(0, `rgba(${r},${g},${b},0.35)`);
       rg.addColorStop(1, `rgba(${r},${g},${b},0)`);
       ctx.fillStyle = rg;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, glow, 0, Math.PI*2);
       ctx.fill();
 
+      // 细火花：沿速度方向拉一小段线，烟花会更“干净锐利”
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = `rgba(${r},${g},${b},1)`;
+      ctx.lineWidth = 1.1; // 线条更细：0.9~1.3
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y);
+      ctx.lineTo(pt.x - pt.vx*2.6, pt.y - pt.vy*2.6);
+      ctx.stroke();
+
       // 粒子点
       ctx.globalAlpha = alpha;
       ctx.fillStyle = `rgba(${r},${g},${b},1)`;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI*2);
+      // ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI*2);
+      ctx.arc(pt.x, pt.y, pt.r*0.75, 0, Math.PI*2);
       ctx.fill();
     }
 
