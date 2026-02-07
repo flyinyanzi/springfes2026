@@ -159,8 +159,86 @@
 <body>
   <div class="hint">短句：随机顺序且不重复｜长信：最底层｜都可拖拽/关闭</div>
   <canvas id="fx"></canvas>
+  
+  <div id="countdown-container" style="
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #fff;
+    background: rgba(0,0,0,0.3);
+    padding: 20px 28px;
+    border-radius: 12px;
+    text-align: center;
+    font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    display: none;
+  ">
+    距离新年还有：<span id="countdown-text">--:--:--</span>
+  </div>
 
 <script>
+
+(function(){
+  const targetTime = new Date("2026-02-17T00:00:00+08:00").getTime(); // 大年初一零点（北京时间）
+  const now = Date.now();
+
+  if (now < targetTime) {
+    document.getElementById("countdown-container").style.display = "block";
+
+    const updateCountdown = () => {
+      const now = Date.now();
+      const diff = targetTime - now;
+
+      if (diff <= 0) {
+        // 时间到：隐藏倒计时，执行原始页面逻辑
+        document.getElementById("countdown-container").remove();
+        startCard(); // ← 手动触发贺卡内容生成
+        return;
+      }
+
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      const padded = (n) => n.toString().padStart(2, '0');
+      document.getElementById("countdown-text").textContent = 
+        `${days}天 ${padded(hours)}:${padded(minutes)}:${padded(seconds)}`;
+    };
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  } else {
+    startCard(); // 如果时间已过，立即加载贺卡
+  }
+
+  // 将主流程的代码封装为函数，延迟触发
+  function startCard(){
+    // === 主流程：短句刷完 → 弹长信 ===
+    const initialCount = Math.min(10, shortMsgs.length);
+    for(let i=0;i<initialCount;i++){
+      const msg = nextShort();
+      if(msg) createPopup({text: msg, kind:"small"});
+    }
+
+    const intervalMs = 160;
+    const timer = setInterval(() => {
+      if(letterShown) return;
+      const msg = nextShort();
+      if(msg){
+        createPopup({text: msg, kind:"small"});
+        return;
+      }
+      clearInterval(timer);
+      letterShown = true;
+      createPopup({text: longLetter, kind:"letter"});
+    }, intervalMs);
+  }
+})();
+
   // ========= 编辑贺卡内容：短句 & 长信 =========
 
   // 柔和色（粉/蓝/绿）
