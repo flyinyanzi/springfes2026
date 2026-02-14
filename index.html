@@ -560,6 +560,7 @@ function triggerEffect_01(){
         FX.clear();
         FX.c.classList.remove("on-top");
         EFFECT_LOCK = false;
+        resolve();
       }, 220);
     }
   }
@@ -802,7 +803,12 @@ function triggerEffect_02(){
         ctx.fillRect(0,0,W,H);
         ctx.globalAlpha = 1;
         if(pp < 1) requestAnimationFrame(fade);
-        else { FX.clear(); FX.c.classList.remove("on-top"); EFFECT_LOCK = false; }
+        else {
+          FX.clear();
+          FX.c.classList.remove("on-top");
+          EFFECT_LOCK = false;
+          resolve();
+        }
       })(endStart);
     }
   }
@@ -965,6 +971,7 @@ function triggerEffect_03(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
+      resolve();
     }
   }
 
@@ -1135,6 +1142,7 @@ function triggerEffect_04(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
+      resolve();
     }
   }
 
@@ -1352,6 +1360,7 @@ function triggerEffect_05(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
+      resolve();
     }
   }
 
@@ -1681,6 +1690,7 @@ for(const side of [-1, 1]){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
+      resolve();
     }
   }
 
@@ -1997,12 +2007,24 @@ function createPopup({text, kind="small"}){
 
     // 如果关闭的是触发句 → 按序号变量关闭
     if(kind === "small"){
-      if(text === TRIGGER_TEXT_01) triggerEffect_01();
-      if(text === TRIGGER_TEXT_02) triggerEffect_02();
-      if(text === TRIGGER_TEXT_03) triggerEffect_03();
-      if(text === TRIGGER_TEXT_04) triggerEffect_04();
-      if(text === TRIGGER_TEXT_05) triggerEffect_05();
-      if(text === TRIGGER_TEXT_06) triggerEffect_06();
+      // 在关闭 small 的时候，先移除 spotlight（否则背景依然是暗的）
+      document.body.classList.remove("spotlight");
+
+      let effectPromise = Promise.resolve();
+      
+      if(text === TRIGGER_TEXT_01) effectPromise = triggerEffect_01();
+      if(text === TRIGGER_TEXT_02) effectPromise = triggerEffect_02();
+      if(text === TRIGGER_TEXT_03) effectPromise = triggerEffect_03();
+      if(text === TRIGGER_TEXT_04) effectPromise = triggerEffect_04();
+      if(text === TRIGGER_TEXT_05) effectPromise = triggerEffect_05();
+      if(text === TRIGGER_TEXT_06) effectPromise = triggerEffect_06();
+
+      el.remove();
+
+      effectPromise.then(() => {
+        highlightTopPopup();
+      });
+      return;
     }
 
     // 记录是不是长信
