@@ -155,12 +155,16 @@
     body.night-sky{ background: radial-gradient(1100px 700px at 60% 25%, #0b1a3a, #05060d); }
 
     /* 给下一个要关闭的弹窗加高亮 */
-    @keyframes spotlightPulse {
-      0%   { transform: scale(1); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
-      50%  { transform: scale(1.04); box-shadow: 0 28px 70px rgba(255,255,255,.35); }
-      100% { transform: scale(1); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+    .popup{
+      transition: box-shadow .25s ease, transform .25s ease;
     }
-
+    .popup.highlight{
+      box-shadow:
+      0 0 0 4px rgba(255,255,255,.6),
+      0 0 35px rgba(255,255,255,.6),
+      0 18px 40px rgba(0,0,0,.45);
+      transform: scale(1.03);
+    }
     .popup.highlight {
       animation: spotlightPulse 0.9s ease-in-out 1;
     }
@@ -2009,7 +2013,7 @@ function createPopup({text, kind="small"}){
     el.classList.add("highlight");
     setTimeout(() => {
       el.classList.remove("highlight");
-    }, 900);
+    }, 1300);
   }
 
   // 拖拽（标题栏）
