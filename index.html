@@ -155,15 +155,26 @@
     body.night-sky{ background: radial-gradient(1100px 700px at 60% 25%, #0b1a3a, #05060d); }
 
     /* 给下一个要关闭的弹窗加高亮 */
+    /* 舞台聚光灯效果 */
+    body.spotlight::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 900;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
     .popup{
-      transition: box-shadow .25s ease, transform .25s ease;
+      transition: transform .25s ease, box-shadow .25s ease;
     }
     .popup.highlight{
+      transform: scale(1.08);
       box-shadow:
-      0 0 0 4px rgba(255,255,255,.6),
-      0 0 40px rgba(255,255,255,.7),
-      0 18px 40px rgba(0,0,0,.45);
-      transform: scale(1.04);
+      0 0 60px rgba(255,255,255,.8),
+      0 0 120px rgba(255,255,255,.4),
+      0 25px 60px rgba(0,0,0,.6);
+      z-index: 2000 !important;
     }
 
   </style>
@@ -2067,9 +2078,11 @@ function maybeStartFireworks(){
 // 给下一个要关闭的弹窗加高亮（当前最上层z-index）
 function highlightTopPopup(){
   const popups = Array.from(document.querySelectorAll(".popup.small"));
-  if(popups.length === 0) return;
+  if(popups.length === 0){
+    document.body.classList.remove("spotlight");
+    return;
+  }
 
-  // 找 z-index 最大的
   let topEl = null;
   let topZ = -1;
 
@@ -2081,13 +2094,12 @@ function highlightTopPopup(){
     }
   });
 
-  if(!topEl) return;
-
-  // 清除其他高亮
   popups.forEach(el => el.classList.remove("highlight"));
 
-  // 加高亮
-  topEl.classList.add("highlight");
+  if(topEl){
+    topEl.classList.add("highlight");
+    document.body.classList.add("spotlight");
+  }
 }
 
   // === 主流程：短句（不重复）刷完 → 弹长信（底层） ===
