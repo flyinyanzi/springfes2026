@@ -161,12 +161,9 @@
     .popup.highlight{
       box-shadow:
       0 0 0 4px rgba(255,255,255,.6),
-      0 0 35px rgba(255,255,255,.6),
+      0 0 40px rgba(255,255,255,.7),
       0 18px 40px rgba(0,0,0,.45);
-      transform: scale(1.03);
-    }
-    .popup.highlight {
-      animation: spotlightPulse 0.9s ease-in-out 1;
+      transform: scale(1.04);
     }
 
   </style>
@@ -2002,19 +1999,16 @@ function createPopup({text, kind="small"}){
     el.remove();
     maybeStartFireworks();
 
+    // 关闭后重新加高亮
+    setTimeout(() => {
+      highlightTopPopup();
+    }, 200);
+
     // ✅ 关闭长信后：彩蛋逐字 + 月光
     if(wasLetter){
       setTimeout(triggerMoonEnding, 300); // 稍微等一下更像“余韵”
     }
   });
-
-  // 给下一个要关闭的弹窗加高亮
-  if(kind === "small"){
-    el.classList.add("highlight");
-    setTimeout(() => {
-      el.classList.remove("highlight");
-    }, 1300);
-  }
 
   // 拖拽（标题栏）
   const bar = el.querySelector(".bar");
@@ -2070,6 +2064,32 @@ function maybeStartFireworks(){
   }
 }
 
+// 给下一个要关闭的弹窗加高亮（当前最上层z-index）
+function highlightTopPopup(){
+  const popups = Array.from(document.querySelectorAll(".popup.small"));
+  if(popups.length === 0) return;
+
+  // 找 z-index 最大的
+  let topEl = null;
+  let topZ = -1;
+
+  popups.forEach(el => {
+    const z = parseInt(el.style.zIndex || 0);
+    if(z > topZ){
+      topZ = z;
+      topEl = el;
+    }
+  });
+
+  if(!topEl) return;
+
+  // 清除其他高亮
+  popups.forEach(el => el.classList.remove("highlight"));
+
+  // 加高亮
+  topEl.classList.add("highlight");
+}
+
   // === 主流程：短句（不重复）刷完 → 弹长信（底层） ===
   // 初始先来一点短窗（不超过队列长度）
   const initialCount = Math.min(10, shortMsgs.length);
@@ -2077,6 +2097,9 @@ function maybeStartFireworks(){
     const msg = nextShort();
     if(msg) createPopup({text: msg, kind:"small"});
   }
+
+  // 所有短弹窗加载完后，调用给当前最上层弹窗加高亮
+  highlightTopPopup();
 
   // 持续刷短窗，直到队列用完
   const intervalMs = 160; // 密度：调小更爆
