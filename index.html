@@ -352,6 +352,26 @@
 
   let FIREWORKS_SHOWN = false;
 
+  // 定义每个特效的时长
+  const EFFECT_DURATION = {
+    TRIGGER_TEXT_01: 1400,
+    TRIGGER_TEXT_02: 1500,
+    TRIGGER_TEXT_03: 1800,
+    TRIGGER_TEXT_04: 1600,
+    TRIGGER_TEXT_05: 1700,
+    TRIGGER_TEXT_06: 1600,
+  };
+
+  // 为特效结束后显示高亮设置函数
+  function runEffectWithPromise(effectFn, duration){
+    return new Promise(resolve => {
+      effectFn(); // 执行原特效
+      setTimeout(() => {
+        resolve();
+      }, duration);
+    });
+  }
+
   // ========= 逻辑部分 =========
 
   const titles = ["温柔提示", "提醒", "消息", "便签", "叮咚"];
@@ -562,7 +582,6 @@ function triggerEffect_01(){
         FX.clear();
         FX.c.classList.remove("on-top");
         EFFECT_LOCK = false;
-        resolve();
       }, 220);
     }
   }
@@ -809,7 +828,6 @@ function triggerEffect_02(){
           FX.clear();
           FX.c.classList.remove("on-top");
           EFFECT_LOCK = false;
-          resolve();
         }
       })(endStart);
     }
@@ -973,7 +991,6 @@ function triggerEffect_03(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
-      resolve();
     }
   }
 
@@ -1144,7 +1161,6 @@ function triggerEffect_04(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
-      resolve();
     }
   }
 
@@ -1362,7 +1378,6 @@ function triggerEffect_05(){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
-      resolve();
     }
   }
 
@@ -1692,7 +1707,6 @@ for(const side of [-1, 1]){
       FX.clear();
       FX.c.classList.remove("on-top");
       EFFECT_LOCK = false;
-      resolve();
     }
   }
 
@@ -2009,21 +2023,28 @@ function createPopup({text, kind="small"}){
 
     // 如果关闭的是触发句 → 按序号变量关闭
     if(kind === "small"){
-      // 在关闭 small 的时候，先移除 spotlight（否则背景依然是暗的）
       document.body.classList.remove("spotlight");
+      HIGHLIGHT_ENABLED = false;
 
       let effectPromise = Promise.resolve();
-      
-      if(text === TRIGGER_TEXT_01) effectPromise = triggerEffect_01();
-      if(text === TRIGGER_TEXT_02) effectPromise = triggerEffect_02();
-      if(text === TRIGGER_TEXT_03) effectPromise = triggerEffect_03();
-      if(text === TRIGGER_TEXT_04) effectPromise = triggerEffect_04();
-      if(text === TRIGGER_TEXT_05) effectPromise = triggerEffect_05();
-      if(text === TRIGGER_TEXT_06) effectPromise = triggerEffect_06();
+
+      if(text === TRIGGER_TEXT_01)
+        effectPromise = runEffectWithPromise(triggerEffect_01, EFFECT_DURATION.TRIGGER_TEXT_01);
+      if(text === TRIGGER_TEXT_02)
+        effectPromise = runEffectWithPromise(triggerEffect_02, EFFECT_DURATION.TRIGGER_TEXT_02);
+      if(text === TRIGGER_TEXT_03)
+        effectPromise = runEffectWithPromise(triggerEffect_03, EFFECT_DURATION.TRIGGER_TEXT_03);
+      if(text === TRIGGER_TEXT_04)
+        effectPromise = runEffectWithPromise(triggerEffect_04, EFFECT_DURATION.TRIGGER_TEXT_04);
+      if(text === TRIGGER_TEXT_05)
+        effectPromise = runEffectWithPromise(triggerEffect_05, EFFECT_DURATION.TRIGGER_TEXT_05);
+      if(text === TRIGGER_TEXT_06)
+        effectPromise = runEffectWithPromise(triggerEffect_06, EFFECT_DURATION.TRIGGER_TEXT_06);
 
       el.remove();
 
       effectPromise.then(() => {
+        HIGHLIGHT_ENABLED = true;
         highlightTopPopup();
       });
       return;
