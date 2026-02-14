@@ -348,6 +348,8 @@
 。
 `;
 
+  let HIGHLIGHT_ENABLED = false;
+
   let FIREWORKS_SHOWN = false;
 
   // ========= 逻辑部分 =========
@@ -2100,6 +2102,8 @@ function maybeStartFireworks(){
 
 // 给下一个要关闭的弹窗加高亮（当前最上层z-index）
 function highlightTopPopup(){
+  if(!HIGHLIGHT_ENABLED) return;
+
   const popups = Array.from(document.querySelectorAll(".popup.small"));
   if(popups.length === 0){
     document.body.classList.remove("spotlight");
@@ -2133,12 +2137,6 @@ function highlightTopPopup(){
     if(msg) createPopup({text: msg, kind:"small"});
   }
 
-  // 所有短弹窗加载完后，调用给当前最上层弹窗加高亮
-  setTimeout(() => {
-    highlightTopPopup();
-  }, 350);
-
-
   // 持续刷短窗，直到队列用完
   const intervalMs = 160; // 密度：调小更爆
   const timer = setInterval(() => {
@@ -2150,12 +2148,15 @@ function highlightTopPopup(){
       return;
     }
 
-    // 短句全部用完：停止刷短窗，弹出长信（但在底层）
+    // 短句全部用完
     clearInterval(timer);
+    // 所有短弹窗加载完后，调用函数：给初始最上层弹窗加高亮
+    HIGHLIGHT_ENABLED = true;
+    highlightTopPopup();
+
     letterShown = true;
     createPopup({text: longLetter, kind:"letter"});
   }, intervalMs);
-
 
   
 </script>
