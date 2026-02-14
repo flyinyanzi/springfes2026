@@ -179,6 +179,23 @@
     距离新年还有：<span id="countdown-text">--:--:--</span>
   </div> -->
 
+  <div id="moon-ending" style="
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    font-size: 22px;
+    font-family: 'PingFang SC', sans-serif;
+    text-align: center;
+    z-index: 9998;
+    pointer-events: none;
+    white-space: pre-line;
+  ">
+  </div>
+
 <script>
 
 // (function(){
@@ -301,6 +318,7 @@
 我感受你的困惑，也祝愿你迈步前行；也许会在岸边逡巡，祝愿你能够被云霞日光与月色抚慰；也许会犹豫不决，也祝愿你勇敢抉择；也许兵荒马乱，也祝愿你汇聚千军万马。
 
 不管我们此刻身在怎样的距离，我都希望你在新的一年能被温柔包围，幸福美满，也能无忧无惧，坚守自己的力量～
+
 新春快乐！
 
 。
@@ -1826,6 +1844,31 @@ function triggerEffect_FIREWORKS(){
 
   requestAnimationFrame(frame);
 }
+
+
+function triggerMoonEnding(){
+  const container = document.getElementById("moon-ending");
+  if(!container) return;
+
+  container.style.display = "flex";
+  container.textContent = "";
+
+  const text = "希望今晚的烟火里，有一个角落是给你的。\n即使没有烟火也很好，会有月色陪伴你。";
+
+  let i = 0;
+  const tick = () => {
+    if(i >= text.length){
+      // 字打完：触发你已有的“月光”特效（Effect 03）
+      triggerEffect_03();
+      return;
+    }
+    container.textContent += text[i];
+    i++;
+    setTimeout(tick, 70); // 速度：50~90 自己调
+  };
+  tick();
+}
+
 // ===== Effect End =====
   
 function createPopup({text, kind="small"}){
@@ -1883,6 +1926,7 @@ function createPopup({text, kind="small"}){
   // 关闭
   el.querySelector(".close").addEventListener("click", (e) => {
     e.stopPropagation();
+
     // 如果关闭的是触发句 → 按序号变量关闭
     if(kind === "small"){
       if(text === TRIGGER_TEXT_01) triggerEffect_01();
@@ -1892,8 +1936,17 @@ function createPopup({text, kind="small"}){
       if(text === TRIGGER_TEXT_05) triggerEffect_05();
       if(text === TRIGGER_TEXT_06) triggerEffect_06();
     }
+
+    // 记录是不是长信
+    const wasLetter = (kind === "letter");
+
     el.remove();
-    maybeStartFireworks(); // 每次关闭检查是否只剩贺卡
+    maybeStartFireworks();
+
+    // ✅ 关闭长信后：彩蛋逐字 + 月光
+    if(wasLetter){
+      setTimeout(triggerMoonEnding, 300); // 稍微等一下更像“余韵”
+    }
   });
 
   // 拖拽（标题栏）
