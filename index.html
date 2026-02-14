@@ -168,14 +168,23 @@
     .popup{
       transition: transform .25s ease, box-shadow .25s ease;
     }
-    .popup.highlight{
-      /* 让聚光灯效果更强烈（1.12） */
+
+    /* 聚光灯效果（灯光亮度：1.12） */
+    /* .popup.highlight{
       transform: scale(1.12);
       box-shadow:
       0 0 60px rgba(255,255,255,.8),
       0 0 120px rgba(255,255,255,.4),
       0 25px 60px rgba(0,0,0,.6);
       z-index: 2000 !important;
+    } */
+
+    .popup.highlight{
+      transform: scale(1.12);
+      box-shadow:
+      0 0 40px rgba(255,215,120,.9),
+      0 0 120px rgba(255,200,80,.5),
+      0 25px 60px rgba(0,0,0,.6);
     }
 
   </style>
@@ -2046,6 +2055,7 @@ function createPopup({text, kind="small"}){
       effectPromise.then(() => {
         HIGHLIGHT_ENABLED = true;
         highlightTopPopup();
+        maybeStartFireworks();
       });
       return;
     }
@@ -2172,8 +2182,10 @@ function highlightTopPopup(){
     // 短句全部用完
     clearInterval(timer);
     // 所有短弹窗加载完后，调用函数：给初始最上层弹窗加高亮
-    HIGHLIGHT_ENABLED = true;
-    highlightTopPopup();
+    setTimeout(() => {
+      HIGHLIGHT_ENABLED = true;
+      highlightTopPopup();
+    }, 600);
 
     letterShown = true;
     createPopup({text: longLetter, kind:"letter"});
